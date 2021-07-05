@@ -120,7 +120,7 @@ def formatColumn(d):
                     schedualed.append(row[3])
                     
                     
-        concatenatedList = [np.nan, np.nan] + importLimit + [np.nan] + exportLimit + [np.nan] + schedualed
+        concatenatedList = ['', ''] + importLimit + [''] + exportLimit + [''] + schedualed
         numericalDict[i] = numericalDict[i] + concatenatedList
 
     # create a column of row labels
@@ -148,10 +148,10 @@ def formatColumn(d):
     rows = rows + ['Import Limit MW'] + ph + ['Export Limit MW'] + ph + ['Scheduled Contract MW'] + ph
     
     for i in range(len(rows)-len(sectionIndicatorIndex)):
-        sectionIndicatorIndex += [np.nan]
+        sectionIndicatorIndex += ['']
     
-    sectionIndicatorIndex = [np.nan] + sectionIndicatorIndex
-    rows = [np.nan] + rows
+    sectionIndicatorIndex = [''] + sectionIndicatorIndex
+    rows = [''] + rows
     
     #Build dataframe
     df['Sections'] = sectionIndicatorIndex
@@ -161,7 +161,7 @@ def formatColumn(d):
         
         #Create date headers that are easy to read
         header = i[6:] + '/' + i[4:6]
-        numericalDict[i] = [np.nan] + numericalDict[i]
+        numericalDict[i] = [''] + numericalDict[i]
         df[header] = numericalDict[i]
     
     return df
@@ -172,6 +172,9 @@ d = downloadFiles()
 
 #Format the columns into the required dataframe
 df = formatColumn(d)
+
+#Display dataFrame in case saving does not work
+print(df)
 
 #Save csv onto the Desktop
 df.to_csv(os.path.join(os.path.join(r'C:',os.environ['HOMEPATH'],'Desktop\ISO Morning Report.csv')), index = False)
