@@ -145,7 +145,7 @@ def formatColumn(d):
             rows.append(row[1])
             
     ph = ['HighGate', 'NB', 'NYISO AC', 'NYISO CSC', 'NYISO NNC', 'Phase 2']
-    rows = rows + ['Import Limit MW'] + ph + ['Export Limit MW'] + ph + ['Schedualed Contract MW'] + ph
+    rows = rows + ['Import Limit MW'] + ph + ['Export Limit MW'] + ph + ['Scheduled Contract MW'] + ph
     
     for i in range(len(rows)-len(sectionIndicatorIndex)):
         sectionIndicatorIndex += [np.nan]
