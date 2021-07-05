@@ -9,26 +9,25 @@ import os
 requestURL = "https://www.iso-ne.com/transform/csv/morningreport?start="
 
 
-def getDates(): 
-    
+def getDates():
+
     # this is a function that generates a list with the dates of the last 7 days
 
     dateToday = DT.date.today()
     timeList = []
     for i in range(7):
-        
+
         timeList.append(str(dateToday).replace("-", ""))
         dateToday = dateToday - DT.timedelta(days=1)
-        
+
     return timeList
 
 
 def downloadFiles():
-    
-    
+
     # This function uses the api URL of the ISO Morning report archives to request the report of each of the 7 days required
-    #They are placed in a dictionary based on their dates
-    
+    # They are placed in a dictionary based on their dates
+
     dateList = getDates()
     csvDict = {}
 
@@ -47,14 +46,14 @@ def downloadFiles():
 def formatColumn(d):
 
     # This is a function that formats the downloaded csv's into a usefull format.
-    
+
     # First, the useless values are removed from the csvs - we only need sections 3-7.
     # Then, we extract the numbers from sections 3-6.
     # Then we extract the numbers from section 7(more difficult due to downloaded format)
     # Then we create a section index which is embeded in the row labels.
     # Then we can create a dataframe with all the required data.
     # Then we add a column of row labels and a column of section labels to the dataframe.
-    # Export the dataframe onto the desktop as a csv. 
+    # Export the dataframe onto the desktop as a csv.
 
     sectionIndicatorIndex = []  # This will store the section numbers
     numericalDict = {}  # This will store all the numbers from the csv's
@@ -100,7 +99,7 @@ def formatColumn(d):
 
     # Extract the data from section 7. More difficult because reformatting is required
     for i in d.keys():
-        
+
         importLimit = []
         exportLimit = []
         schedualed = []
@@ -113,14 +112,14 @@ def formatColumn(d):
                 x = True
 
             elif x == True:
-                
+
                 if row[-1][-1].isdecimal():
                     importLimit.append(row[2])
                     exportLimit.append(row[3])
                     schedualed.append(row[3])
-                    
-                    
-        concatenatedList = ['', ''] + importLimit + [''] + exportLimit + [''] + schedualed
+
+        concatenatedList = ['', ''] + importLimit + \
+            [''] + exportLimit + [''] + schedualed
         numericalDict[i] = numericalDict[i] + concatenatedList
 
     # create a column of row labels
@@ -128,63 +127,56 @@ def formatColumn(d):
     m = False
 
     for row in list(d.values())[0]:
-        
+
         if 'Section' in row[1] and m == False:
-            
+
             if counter == 7:
                 x = row[1].replace('Section {}. '.format(counter), '')
                 rows.append(x)
                 m = True
                 break
-            
+
             x = row[1].replace('Section {}. '.format(counter), '')
             rows.append(x)
             counter += 1
-        
+
         else:
             rows.append(row[1])
-            
+
     ph = ['HighGate', 'NB', 'NYISO AC', 'NYISO CSC', 'NYISO NNC', 'Phase 2']
-    rows = rows + ['Import Limit MW'] + ph + ['Export Limit MW'] + ph + ['Scheduled Contract MW'] + ph
-    
+    rows = rows + ['Import Limit MW'] + ph + \
+        ['Export Limit MW'] + ph + ['Scheduled Contract MW'] + ph
+
     for i in range(len(rows)-len(sectionIndicatorIndex)):
         sectionIndicatorIndex += ['']
-    
+
     sectionIndicatorIndex = [''] + sectionIndicatorIndex
     rows = [''] + rows
-    
-    #Build dataframe
+
+    # Build dataframe
     df['Sections'] = sectionIndicatorIndex
     df['Rows'] = rows
-    
+
     for i in numericalDict.keys():
-        
-        #Create date headers that are easy to read
+
+        # Create date headers that are easy to read
         header = i[6:] + '/' + i[4:6]
         numericalDict[i] = [''] + numericalDict[i]
         df[header] = numericalDict[i]
-    
-    return df
-    
 
-#Download Files
+    return df
+
+
+# Download Files
 d = downloadFiles()
 
-#Format the columns into the required dataframe
+# Format the columns into the required dataframe
 df = formatColumn(d)
 
-#Display dataFrame in case saving does not work
+# Display dataFrame in case saving does not work
 print(df)
 
-#Save csv onto the Desktop
-df.to_csv(os.path.join(os.path.join(r'C:',os.environ['HOMEPATH'],'Desktop\ISO Morning Report.csv')), index = False)
-
-
-
-
-
-
-
-
-
-
+# Save csv onto the Desktop
+df.to_csv(os.path.join(os.path.join(
+    r'C:', os.environ['HOMEPATH'], 'Desktop\ISO Morning Report.csv')), index=False)
+print(" Saved to C: \ Users \ Username \ Desktop \ ISOMorningReport . csv")
