@@ -9,7 +9,9 @@ import os
 requestURL = "https://www.iso-ne.com/transform/csv/morningreport?start="
 
 
-def getDates():  # this is a function that generates a list with the dates of the last 7 days
+def getDates(): 
+    
+    # this is a function that generates a list with the dates of the last 7 days
 
     dateToday = DT.date.today()
     timeList = []
@@ -22,6 +24,11 @@ def getDates():  # this is a function that generates a list with the dates of th
 
 
 def downloadFiles():
+    
+    
+    # This function uses the api URL of the ISO Morning report archives to request the report of each of the 7 days required
+    #They are placed in a dictionary based on their dates
+    
     dateList = getDates()
     csvDict = {}
 
@@ -40,13 +47,14 @@ def downloadFiles():
 def formatColumn(d):
 
     # This is a function that formats the downloaded csv's into a usefull format.
+    
     # First, the useless values are removed from the csvs - we only need sections 3-7.
     # Then, we extract the numbers from sections 3-6.
     # Then we extract the numbers from section 7(more difficult due to downloaded format)
     # Then we create a section index which is embeded in the row labels.
     # Then we can create a dataframe with all the required data.
     # Then we add a column of row labels and a column of section labels to the dataframe.
-    # Then we return a csv string
+    # Export the dataframe onto the desktop as a csv. 
 
     sectionIndicatorIndex = []  # This will store the section numbers
     numericalDict = {}  # This will store all the numbers from the csv's
@@ -65,7 +73,7 @@ def formatColumn(d):
     counter = 3
     dList = list(d.values())[0]
 
-    # Generate the section index list
+    # Generate the section index list (First column is the 'Section Column')
     for i in dList:
         if 'Section' not in i[1]:
             sectionIndicatorIndex.append('')
@@ -79,7 +87,7 @@ def formatColumn(d):
 
         for row in d[i]:
 
-            # First deal with sections 3-6 as they are single valued
+            # Extract data from section 3-6. This is easy because no reformatting is required
             if 'Section 7' not in row[1]:
                 if row[-1][-1].isdecimal():
                     ls.append(row[-1])
@@ -90,7 +98,7 @@ def formatColumn(d):
 
         numericalDict[i] = ls
 
-    # Extract the numbers from section 7
+    # Extract the data from section 7. More difficult because reformatting is required
     for i in d.keys():
         
         importLimit = []
@@ -145,19 +153,27 @@ def formatColumn(d):
     sectionIndicatorIndex = [np.nan] + sectionIndicatorIndex
     rows = [np.nan] + rows
     
+    #Build dataframe
     df['Sections'] = sectionIndicatorIndex
     df['Rows'] = rows
     
     for i in numericalDict.keys():
         
+        #Create date headers that are easy to read
         header = i[6:] + '/' + i[4:6]
         numericalDict[i] = [np.nan] + numericalDict[i]
         df[header] = numericalDict[i]
     
     return df
     
+
+#Download Files
 d = downloadFiles()
+
+#Format the columns into the required dataframe
 df = formatColumn(d)
+
+#Save csv onto the Desktop
 df.to_csv(os.path.join(os.path.join(r'C:',os.environ['HOMEPATH'],'Desktop\ISO Morning Report.csv')), index = False)
 
 
