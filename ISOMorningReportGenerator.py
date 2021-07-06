@@ -3,11 +3,18 @@ import datetime as DT
 import csv
 import pandas as pd
 import os
+import numpy as np
 
-# append date onto the end
+# append date onto the end in format yyyymmdd when sending GET requests
 requestURL = "https://www.iso-ne.com/transform/csv/morningreport?start="
 
 
+
+################################################ Function Definition ##########################################################
+
+
+
+#-------------------------------------------------------------------------------
 def getDates():
 
     # this is a function that generates a list with the dates of the last 7 days
@@ -22,6 +29,8 @@ def getDates():
     return timeList
 
 
+
+#-------------------------------------------------------------------------------
 def downloadFiles():
 
     # This function uses the api URL of the ISO Morning report archives to request the report of each of the 7 days required
@@ -42,6 +51,8 @@ def downloadFiles():
     return csvDict
 
 
+
+#-------------------------------------------------------------------------------
 def formatColumn(d):
 
     # This is a function that formats the downloaded csv's into a usefull format.
@@ -88,9 +99,9 @@ def formatColumn(d):
             # Extract data from section 3-6. This is easy because no reformatting is required
             if 'Section 7' not in row[1]:
                 if row[-1][-1].isdecimal():
-                    ls.append(row[-1])
+                    ls.append(int(row[-1]))
                 else:
-                    ls.append('')
+                    ls.append(np.nan)
             else:
                 break
 
@@ -113,12 +124,12 @@ def formatColumn(d):
             elif x == True:
 
                 if row[-1][-1].isdecimal():
-                    importLimit.append(row[2])
-                    exportLimit.append(row[3])
-                    schedualed.append(row[3])
+                    importLimit.append(int(row[2]))
+                    exportLimit.append(int(row[3]))
+                    schedualed.append(int(row[3]))
 
-        concatenatedList = ['', ''] + importLimit + \
-            [''] + exportLimit + [''] + schedualed
+        concatenatedList = [np.nan, np.nan] + importLimit + \
+            [np.nan] + exportLimit + [np.nan] + schedualed
         numericalDict[i] = numericalDict[i] + concatenatedList
 
     # create a column of row labels
@@ -155,16 +166,36 @@ def formatColumn(d):
     # Build dataframe
     df['Sections'] = sectionIndicatorIndex
     df['Rows'] = rows
+    
 
-    for i in numericalDict.keys():
+    #Reversed the range so that left most column is 7 days ago.    
+    for i in reversed(numericalDict.keys()):
 
         # Create date headers that are easy to read
-        header = i[6:] + '/' + i[4:6]
-        numericalDict[i] = [''] + numericalDict[i]
+        header = i[4:6] + '/' + i[6:] # American date layout
+        numericalDict[i] = [np.nan] + numericalDict[i]
         df[header] = numericalDict[i]
+    
+    #Adding delta column
+    todayDate = str(DT.date.today()).replace('-','')
+    todayDateHeader = todayDate[4:6] + '/' + todayDate[6:]
+    
+    yesterdayDate = str(DT.date.today() - DT.timedelta(days=1)).replace('-','')
+    yesterdayDateHeader = yesterdayDate[4:6] +'/' + yesterdayDate[6:]
+
+    
+    df['Delta'] = df[todayDateHeader] - df[yesterdayDateHeader]
 
     return df
+#-------------------------------------------------------------------------------
 
+
+
+
+
+
+
+########################################################### Runtime #####################################################
 
 # Download Files
 d = downloadFiles()
@@ -173,9 +204,11 @@ d = downloadFiles()
 df = formatColumn(d)
 
 # Display dataFrame in case saving does not work
-print(df)
+print(df.replace(np.nan, '', regex=True)) #when displaying, replace np.nan with '' so that it looks good
 
 # Save csv onto the Desktop
 df.to_csv(os.path.join(os.path.join(
     r'C:', os.environ['HOMEPATH'], 'Desktop\ISO Morning Report.csv')), index=False)
-print(" Saved to C: \ Users \ Username \ Desktop \ ISOMorningReport . csv")
+
+#inform user of location of save (should be desktop)
+print(" Saved to C: \ Users \ Username \ Desktop \ ISOMorningReport.csv") 
